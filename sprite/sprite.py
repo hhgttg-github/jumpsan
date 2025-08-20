@@ -237,7 +237,7 @@ class AniSprite(Sprite):
         self.interval_table = {}
         self.speed_table = {}
 
-    def add_frame(self,key,f_list,intreval,speed): 
+    def add_frame(self,key,f_list,interval,speed): 
         #f_listは最低長さ1以上のリストでアニメーション用のリスト
         if len(f_list) == 1:             #固定画像で要素が1の場合、
             self.frame[key] = f_list     #f_listは[?]と要素1のリストでないといけない
@@ -254,11 +254,19 @@ class AniSprite(Sprite):
         self.speed_table[key] = speed        # None or (dx,dy) tuple
         
     def set_frame(self,key):
-        self.key = key
+        if self.previous_key == key:
+            return()
+        else:
+            self.key = key
+            self.frame_index = 0
+            self.interval = self.interval_table[key]
+            if not(self.speed_table[key]==None):
+                self.dx = self.speed_table[key][0]
+                self.dy = self.speed_table[key][1]
         
     def update(self):
         super().update()
-
+        print(f"frame_index = {self.frame_index}")
         if self.next <= pyxel.frame_count:
             self.start = pyxel.frame_count
             self.next = self.start + self.interval
