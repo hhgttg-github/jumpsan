@@ -18,41 +18,36 @@ class Jsan:
     def __init__(self):
         self.sp = sp.AniSprite(125,30,0,0,2,STOP_L,sp.sp8Group)
         self.base = self.sp.y + self.sp.h
-        self.sp.add_frame(STOP_L,[0])
-        self.sp.add_frame(RUN_L, [1,2,3,2])
-        self.sp.add_frame(JUMP_L,[8])
-        self.sp.add_frame(STOP_R,[4])
-        self.sp.add_frame(RUN_R, [5,6,7,6])
-        self.sp.add_frame(JUMP_R,[9])
+        self.sp.add_frame(STOP_L,[0],0,(0,0))
+        self.sp.add_frame(RUN_L, [1,2,3,2],2,(-1024,0))
+        self.sp.add_frame(JUMP_L,[8],60,None)
+        self.sp.add_frame(STOP_R,[4],0,(0,0))
+        self.sp.add_frame(RUN_R, [5,6,7,6],2,(1024,0))
+        self.sp.add_frame(JUMP_R,[9],60,None)
 
     def run_horizontal(self,dir):
         if dir == RUN_L:
-            self.sp.key=RUN_L
-            self.sp.speed(-512,0)
-            self.sp.interval = 4
+            self.sp.set_frame(RUN_L)
         elif dir == RUN_R:
-            self.sp.key = RUN_R
-            self.sp.speed(512,0)
-            self.sp.intrvval = 4
+            self.sp.set_frame(RUN_R)
     
     def stop_moving(self):
         if (self.sp.key == RUN_L) or (self.sp.key == JUMP_L):
-            self.sp.key == STOP_L
-            self.sp.dx = 0
-            self.sp.interval = 60
-            return()
+            self.sp.set_frame(STOP_L)
         if (self.sp.key == RUN_R) or (self.sp.key == JUMP_R):
-            self.sp.key == STOP_R
-            self.sp.dx = 0
-            self.sp.interval = 60
-            return()
+            self.sp.set_frame(STOP_R)
         
     def update(self):
         if pyxel.btn(pyxel.KEY_A):
+            print("A Pressed")
+            print(f"interval={self.sp.interval_table[self.sp.key]}")
             self.run_horizontal(RUN_L)
         elif pyxel.btn(pyxel.KEY_D):
+            print("D pressed")
+            print(f"interval={self.sp.interval_table[self.sp.key]}")
             self.run_horizontal(RUN_R)
-        else:
+        elif (pyxel.btnr(pyxel.KEY_A)) or (pyxel.btnr(pyxel.KEY_D)):
+            print("AD Released")
             self.stop_moving()
         self.sp.update()
         
