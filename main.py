@@ -16,7 +16,7 @@ JUMP_R = 5
 class Jsan:
 
     def __init__(self):
-        self.sp = sp.AniSprite(125,30,0,0,2,STOP_L,sp.sp8Group)
+        self.sp = sp.AniSprite(0,0,0,0,2,STOP_L,sp.sp8Group)
         self.base = self.sp.y + self.sp.h
         self.sp.add_frame(STOP_L,[0],0,(0,0))
         self.sp.add_frame(RUN_L, [1,2,3,2],3,(-512,0))
@@ -50,7 +50,7 @@ class Jsan:
 
 class Game:
     def __init__(self):
-        pyxel.init(256,256)
+        pyxel.init(128,128)
         pyxel.load("jumpsan.pyxres")
         self.js = Jsan()
         pyxel.run(self.update,self.draw)
@@ -60,6 +60,7 @@ class Game:
 
     def draw(self):
         pyxel.cls(0)
+        pyxel.bltm(0,0,0,0,0,128,128)
         self.js.draw()
 
 if __name__=="__main__":
