@@ -1,6 +1,6 @@
 import pyxel
 import sprite.sprite as sp
-import jsan
+from jsan import Jsan
 
 ####====================================
 #### CONSTANT

@@ -1,3 +1,7 @@
+
+import pyxel
+import sprite.sprite as sp
+
 ####====================================
 #### CONSTANT
 
