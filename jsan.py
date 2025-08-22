@@ -5,12 +5,25 @@ import sprite.sprite as sp
 ####====================================
 #### CONSTANT
 
+# STATES
+
 STOP_L = 0
 STOP_R = 1
 RUN_L  = 2
 RUN_R  = 3
 JUMP_L = 4
 JUMP_R = 5
+FALL   = 6
+
+STOP_JUMP_V = -2048
+RUN_JUMP_V  = -3072
+
+JUMP_DY_3 = 128
+JUMP_DY_2 = 256
+JUMP_DY_1 = 512
+
+FALL_Y_1 = 512
+FALL_Y_2 = 1024
 
 ####====================================
 
@@ -19,12 +32,15 @@ class Jsan:
     def __init__(self):
         self.sp = sp.AniSprite(0,0,0,0,2,STOP_L,sp.sp8Group)
         self.base = self.sp.y + self.sp.h
+        self.states = STOP_L
+
         self.sp.add_frame(STOP_L,[0],0,(0,0))
         self.sp.add_frame(RUN_L, [1,2,3,2],3,(-512,0))
         self.sp.add_frame(JUMP_L,[8],60,None)
         self.sp.add_frame(STOP_R,[4],0,(0,0))
         self.sp.add_frame(RUN_R, [5,6,7,6],3,(512,0))
         self.sp.add_frame(JUMP_R,[9],60,None)
+
 
     def run_horizontal(self,dir):
         self.sp.set_frame(dir)
