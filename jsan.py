@@ -68,6 +68,7 @@ class Jsan:
     def start_falling(self):
         self.states = FALL
         self.sp.dy = FALL_Y_MAX
+        self.sp.dx = 0
 
 ####------------------------------------
 
