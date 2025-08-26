@@ -18,9 +18,25 @@ TILE_DICT = {
     (0,1) : T_EXIT
 }
 
+CAN_STAND = (T_WALL,T_LADDER)
+BLOCKED   = (T_WALL)
+
 ####==============================================
 #### FUNCTION
 
 def get_tile(x,y):
     tl = pyxel.tilemap[0].pget(x // 8, y // 8)
     return(TILE_DICT.get(tl, T_NONE))
+
+def can_stand(x,y):
+    if get_tile(x,y) in CAN_STAND:
+        return(True)
+    else:
+        return(False)
+
+def can_pass(x,y):
+    if get_tile(x,y) == T_WALL:
+        return(False)
+    else:
+        return(True)
+    
