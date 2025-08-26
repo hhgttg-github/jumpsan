@@ -24,7 +24,7 @@ JUMPABLE = [STOP,RUN]
 
 HRZ_MOVE = 1024 # HORIZONTAL MOVE 横方向移動量
 
-FALL_Y_MAX = 2048       #落下の最高速度　これ以上は加速しない
+FALL_Y_MAX = 512       #落下の最高速度　これ以上は加速しない
 
 ####====================================
 
@@ -65,7 +65,23 @@ class Jsan:
 
 ####------------------------------------
 
+    def start_falling(self):
+        self.states = FALL
+        self.sp.dy = FALL_Y_MAX
+
+####------------------------------------
+
+    def falling(self):
+        self.states = FALL
+
+####------------------------------------
+
     def update(self):
+
+        if not(self.can_stand()): #立っていられない場所なら
+            self.start_falling()
+        else:
+            self.stop_move()
 
         if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
                 self.start_jump()

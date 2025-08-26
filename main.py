@@ -1,6 +1,7 @@
 import pyxel
 import sprite.sprite as sp
 from jsan import Jsan
+import tile as tl
 
 ####====================================
 #### CONSTANT

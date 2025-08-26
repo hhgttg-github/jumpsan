@@ -266,7 +266,6 @@ class AniSprite(Sprite):
         
     def update(self):
         super().update()
-        print(f"frame_index = {self.frame_index}")
         if self.next <= pyxel.frame_count:
             self.start = pyxel.frame_count
             self.next = self.start + self.interval
