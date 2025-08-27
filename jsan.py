@@ -10,6 +10,19 @@ JS_WIDTH  = 8
 JS_HEIGHT = 8
 JS_W_EDGE = 7
 
+TOP_SIDE_L = (0,-1)
+TOP_SIDE_R = (7,-1)
+BTM_SIDE_L = (0, 8)
+BTM_SIDE_R = (7, 8)
+
+LEFT_SIDE_T  = (-1, 0)
+LEFT_SIDE_B  = (-1, 7)
+RIGHT_SIDE_T = ( 8, 0)
+RIGHT_SIDE_B = ( 8, 7)
+
+def plus_tuple(x,y,t):
+    return(x+t[0],y+t[1])
+
 # STATES
 
 LEFT = 0b0000
@@ -24,7 +37,7 @@ JUMPABLE = [STOP,RUN]
 
 HRZ_MOVE = 1024 # HORIZONTAL MOVE 横方向移動量
 
-FALL_Y_MAX = 512       #落下の最高速度　これ以上は加速しない
+FALL_Y_MAX = 1024       #落下の最高速度　これ以上は加速しない
 
 ####====================================
 
@@ -55,9 +68,15 @@ class Jsan:
 ####------------------------------------
 
     def run_horizontal(self,dir):
-        self.direction = dir
-        self.states = RUN
-    
+        if dir == LEFT:
+            if self.can_move_h(LEFT):
+                self.direction = dir
+                self.states = RUN
+        elif dir == RIGHT:
+            if self.can_move_h(RIGHT):
+                self.direction = dir
+                self.states = RUN
+
 ####------------------------------------
 
     def move_horizontal(self,dir):
@@ -111,3 +130,19 @@ class Jsan:
             return(True)
         else:
             return(False)
+        
+    def can_move_h(self,dir):
+        if dir == LEFT:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_T)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_B)
+            if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
+                return(True)
+            else:
+                return(False)
+        if dir == RIGHT:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_T)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_B)
+            if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
+                return(True)
+            else:
+                return(False)
