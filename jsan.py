@@ -94,14 +94,18 @@ class Jsan:
     def falling(self):
         self.states = FALL
 
+    def stop_fall(self):
+        self.sp.dy = 0
+
 ####------------------------------------
 
     def update(self):
 
-        if not(self.can_stand()): #立っていられない場所なら
-            self.start_falling()
-        else:
+        print(f"dy={self.sp.dy}")
+        if self.can_stand():
             self.stop_move()
+        else:
+            self.start_falling()
 
         if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
                 self.start_jump()
