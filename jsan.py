@@ -74,11 +74,11 @@ class Jsan:
 
     def run_horizontal(self,dir):
         if dir == LEFT:
-            if self.can_move_h(LEFT):
+            if not(self.check_side_wall(LEFT)):
                 self.direction = dir
                 self.states = RUN
         elif dir == RIGHT:
-            if self.can_move_h(RIGHT):
+            if not(self.check_side_wall(RIGHT)):
                 self.direction = dir
                 self.states = RUN
 
@@ -92,31 +92,35 @@ class Jsan:
 
 ####------------------------------------
 
-    def start_falling(self):
+    def start_fall(self):
         self.states = FALL
         self.sp.dy = FALL_Y_MAX
-        self.sp.dx = 0
-
-####------------------------------------
-
-    def falling(self):
-        self.states = FALL
 
     def stop_fall(self):
+        self.states = STOP
         self.sp.dy = 0
 
 ####------------------------------------
 
     def update(self):
+        
+        if self.sp.dy > 0: #落下中だけど下に移動できないなら
+            if self.can_stand():
+                self.stop_fall() #落下中止
 
-        print(f"dy={self.sp.dy}")
-        if self.can_stand():
-            self.stop_move()
-        else:
-            self.start_falling()
+        if not(self.can_stand()): #立てない場所なら落下開始
+            self.start_fall()
 
-        if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
-                self.start_jump()
+        #左右が壁なら左右移動中止
+        if self.sp.dx > 0:
+            if self.check_side_wall(RIGHT):
+                self.sp.dx = 0
+        elif self.sp.dx < 0:
+            if self.check_side_wall(LEFT):
+                self.sp.dx = 0
+
+        # if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
+                # self.start_jump()
 
         if pyxel.btn(pyxel.KEY_A):
             self.run_horizontal(LEFT)
@@ -136,25 +140,29 @@ class Jsan:
 ####====================================
 
     def can_stand(self):
-        xx = self.sp.x + JS_W_EDGE
-        yy = self.sp.y + JS_HEIGHT
-        if (tl.can_stand(self.sp.x,yy)) or (tl.can_stand(xx,yy)):
+        """足元が床で立つことができればTrue
+            落下するならFalse"""
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+        if (tl.is_wall(x1,y1)) or (tl.is_wall(x2,y2)):
             return(True)
         else:
             return(False)
         
-    def can_move_h(self,dir):
+    def check_side_wall(self,dir):
+        """ 左右が壁で移動不可能ならTrueを返す。
+            移動可能ならFalseを返す"""
         if dir == LEFT:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_T)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_B)
             if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
-                return(True)
-            else:
                 return(False)
+            else:
+                return(True)
         if dir == RIGHT:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_T)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_B)
             if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
-                return(True)
-            else:
                 return(False)
+            else:
+                return(True)
