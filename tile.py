@@ -39,4 +39,15 @@ def can_pass(x,y):
         return(False)
     else:
         return(True)
+
+def is_wall(x,y):
+    if get_tile(x,y) == T_WALL:
+        return(True)
+    else:
+        return(False)
     
+def is_not_wall(x,y):
+    if not(get_tile(x,y) == T_WALL):
+        return(True)
+    else:
+        return(False)

@@ -143,6 +143,8 @@ class Sprite():
     def __init__(self, x, y, id, hit, sp_group):
         self.x = x
         self.y = y
+        self.px = x
+        self.py = y
         self.sp_group = sp_group
         self.img = sp_group.img
         self.id  = id
@@ -174,10 +176,12 @@ class Sprite():
         self.ty += self.dy
         if abs(self.tx) >= THRESHOULD:
 #            self.x += round(self.tx/THRESHOULD)
+            self.px = self.x
             self.x += self.tx >> THRESHOULD_BIT
             self.tx = 0
         if abs(self.ty) >= THRESHOULD:
 #            self.y += round(self.ty/THRESHOULD)
+            self.py = self.y
             self.y += self.ty >> THRESHOULD_BIT
             self.ty = 0
     
@@ -193,6 +197,9 @@ class Sprite():
     def check_collision(self, sp):
         sprite_collision(self, sp)
 
+    def revert_xy(self):
+        self.x = self.px
+        self.y = self.py
 #=======================================
 #
 # SWITCHING SPRITE

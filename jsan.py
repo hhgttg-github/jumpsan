@@ -10,6 +10,11 @@ JS_WIDTH  = 8
 JS_HEIGHT = 8
 JS_W_EDGE = 7
 
+TOPLEFT  = (0,0)
+TOPRIGHT = (7,0)
+BTMLEFT  = (0,7)
+BTMRIGHT = (7,7)
+
 TOP_SIDE_L = (0,-1)
 TOP_SIDE_R = (7,-1)
 BTM_SIDE_L = (0, 8)
@@ -79,8 +84,11 @@ class Jsan:
 
 ####------------------------------------
 
-    def move_horizontal(self,dir):
-        self.sp.set_frame(self.states + dir)
+    def move_horizontal(self):
+        if (self.direction == LEFT) and (self.can_move_h(LEFT)):
+            self.sp.set_frame(self.states + dir)
+        elif (self.direction == RIGHT) and (self.can_move_h(RIGHT)):
+            self.sp.set_frame(self.states + dir)
 
 ####------------------------------------
 
