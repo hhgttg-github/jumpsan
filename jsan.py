@@ -114,7 +114,7 @@ class Jsan:
 
     def update(self):
         
-        if self.sp.dy > 0: #落下中だけど下に移動できないなら
+        if self.states == FALL: #落下中だけど下に移動できないなら
             if self.can_stand():
                 self.stop_fall() #落下中止
 
@@ -211,7 +211,9 @@ class Jsan:
         if dir == UP:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
-            if tl.can_ud(x1,y1,x2,y2):
+            x3,y3 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+            x4,y4 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+            if tl.can_ud(x1,y1,x2,y2) or tl.can_ud(x3,y3,x4,y4):
                 return(True)
             else:
                 return(False)
