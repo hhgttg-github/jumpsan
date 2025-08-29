@@ -30,17 +30,22 @@ def plus_tuple(x,y,t):
 
 # STATES
 
-LEFT = 0b0000
-RIGHT = 0b0001
+LEFT = 0b00000
+RIGHT = 0b00001
+UP    = 0b00010
+DOWN  = 0b00011
 
-STOP = 0b0000
-RUN  = 0b0010
-JUMP = 0b0100
-FALL = 0b0110
+STOP = 0b00000
+RUN  = 0b00100
+JUMP = 0b01000
+FALL = 0b01100
+LAD  = 0b10000
+LAD_S= 0b10100
 
 JUMPABLE = [STOP,RUN]
 
 HRZ_MOVE = 1024 # HORIZONTAL MOVE 横方向移動量
+VRT_MOVE = 1024
 
 FALL_Y_MAX = 1024       #落下の最高速度　これ以上は加速しない
 
@@ -64,6 +69,8 @@ class Jsan:
         self.sp.add_frame(RUN+RIGHT ,[5,6,7,6],3,(HRZ_MOVE,0))
         self.sp.add_frame(JUMP+RIGHT,[9],0,None)
         self.sp.add_frame(FALL+RIGHT,[9],0,None)
+        self.sp.add_frame(LAD     ,[10,11],3,None)
+        self.sp.add_frame(LAD_S   ,[10],0,(0,0))
 
 ####------------------------------------
 
@@ -84,12 +91,9 @@ class Jsan:
 
 ####------------------------------------
 
-    def move_horizontal(self):
-        if (self.direction == LEFT) and (self.can_move_h(LEFT)):
-            self.sp.set_frame(self.states + dir)
-        elif (self.direction == RIGHT) and (self.can_move_h(RIGHT)):
-            self.sp.set_frame(self.states + dir)
-
+    def move_vertical(self):
+        pass
+    
 ####------------------------------------
 
     def start_fall(self):
@@ -140,11 +144,11 @@ class Jsan:
 ####====================================
 
     def can_stand(self):
-        """足元が床で立つことができればTrue
+        """足元が床/梯子で立つことができればTrue
             落下するならFalse"""
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
         x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-        if (tl.is_wall(x1,y1)) or (tl.is_wall(x2,y2)):
+        if (tl.can_stand(x1,y1)) or (tl.can_stand(x2,y2)):
             return(True)
         else:
             return(False)
@@ -166,3 +170,20 @@ class Jsan:
                 return(False)
             else:
                 return(True)
+            
+    def check_ladder(self,dir):
+        """上下移動可能ならTrue, できなければFalse"""
+        if dir == UP:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
+            if tl.can_ud(x1,y1,x2,y2):
+                return(True)
+            else:
+                return(False)
+        if dir == DOWN:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+            if tl.can_ud(x1,y1,x2,y2):
+                return(True)
+            else:
+                return(False)
