@@ -65,3 +65,9 @@ def can_ud(x1,y1,x2,y2):
         return(True)
     else:
         return(False)
+    
+def is_space(x,y):
+    if get_tile(x,y) == T_NONE:
+        return(True)
+    else:
+        return(False)

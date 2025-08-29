@@ -69,6 +69,7 @@ class Jsan:
         self.sp.add_frame(JUMP+RIGHT,[9],0,None)
         self.sp.add_frame(FALL+RIGHT,[9],0,None)
         self.sp.add_frame(LAD+LEFT  ,[0],0,(0,0))
+        self.sp.add_frame(LAD+RIGHT ,[0],0,(0,0))
         self.sp.add_frame(LAD+UP    ,[10,11],3,(0,VRT_MOVE*(-1)))
         self.sp.add_frame(LAD+DOWN  ,[10,11],3,(0,VRT_MOVE))
 
@@ -113,32 +114,6 @@ class Jsan:
 ####------------------------------------
 
     def update(self):
-        
-        if self.states == FALL: #落下中だけど下に移動できないなら
-            if self.can_stand():
-                self.stop_fall() #落下中止
-
-        if not(self.can_stand()): #立てない場所なら落下開始
-            self.start_fall()
-
-        #左右が壁なら左右移動中止
-        if self.sp.dx > 0:
-            if self.check_wall(RIGHT):
-                self.sp.dx = 0
-        elif self.sp.dx < 0:
-            if self.check_wall(LEFT):
-                self.sp.dx = 0
-
-        #上下が壁なら上下移動中止
-        if self.sp.dy > 0:
-            if self.check_wall(DOWN):
-                self.stop_move()
-        elif self.sp.dy < 0:
-            if self.check_wall(UP):
-                self.stop_move()
-
-        # if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
-                # self.start_jump()
 
         if pyxel.btn(pyxel.KEY_A):
             self.run_horizontal(LEFT)
@@ -154,7 +129,35 @@ class Jsan:
         elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
             self.stop_move()
 
-        self.sp.set_frame(self.states + self.direction)    
+        self.sp.set_frame(self.states + self.direction)
+        #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
+        #### dx,dy,statesなどの修正をしてから、最終アップデートを！
+        
+        if (self.states == FALL) and (self.can_stand()):
+            self.stop_fall()
+        
+        if self.is_freefall():
+            self.start_fall()
+
+        #左右が壁なら左右移動中止
+        if self.sp.dx > 0:
+            if self.check_wall(RIGHT):
+                self.sp.dx = 0
+        elif self.sp.dx < 0:
+            if self.check_wall(LEFT):
+                self.sp.dx = 0
+
+        #落下中、下が壁/梯子なら下移動中止
+        if self.states == FALL:
+            if self.check_wall(DOWN) or self.check_ladder(DOWN):
+                self.stop_fall()
+
+        #上下移動中、上下が壁なら停止
+        if self.sp.dy > 0 and self.check_wall(DOWN):
+                self.stop_move()
+        elif self.sp.dy < 0 and self.check_wall(UP):
+                self.stop_move()
+
         self.sp.update()
 
 ####------------------------------------
@@ -164,6 +167,15 @@ class Jsan:
         
 ####====================================
 
+    def is_freefall(self):
+        """足元が空間で落下するかどうか"""
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+        if tl.is_space(x1,y1) and tl.is_space(x2,y2):
+            return(True)
+        else:
+            return(False)
+        
     def can_stand(self):
         """足元が床/梯子で立つことができればTrue
             落下するならFalse"""
