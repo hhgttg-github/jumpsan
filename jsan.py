@@ -40,7 +40,6 @@ RUN  = 0b00100
 JUMP = 0b01000
 FALL = 0b01100
 LAD  = 0b10000
-LAD_S= 0b10100
 
 JUMPABLE = [STOP,RUN]
 
@@ -69,30 +68,37 @@ class Jsan:
         self.sp.add_frame(RUN+RIGHT ,[5,6,7,6],3,(HRZ_MOVE,0))
         self.sp.add_frame(JUMP+RIGHT,[9],0,None)
         self.sp.add_frame(FALL+RIGHT,[9],0,None)
-        self.sp.add_frame(LAD     ,[10,11],3,None)
-        self.sp.add_frame(LAD_S   ,[10],0,(0,0))
+        self.sp.add_frame(LAD+LEFT  ,[0],0,(0,0))
+        self.sp.add_frame(LAD+UP    ,[10,11],3,(0,VRT_MOVE*(-1)))
+        self.sp.add_frame(LAD+DOWN  ,[10,11],3,(0,VRT_MOVE))
 
 ####------------------------------------
 
     def stop_move(self):
+        self.direction = LEFT
         self.states = STOP
 
 ####------------------------------------
 
     def run_horizontal(self,dir):
         if dir == LEFT:
-            if not(self.check_side_wall(LEFT)):
+            if not(self.check_wall(LEFT)):
                 self.direction = dir
                 self.states = RUN
         elif dir == RIGHT:
-            if not(self.check_side_wall(RIGHT)):
+            if not(self.check_wall(RIGHT)):
                 self.direction = dir
                 self.states = RUN
 
 ####------------------------------------
 
-    def move_vertical(self):
-        pass
+    def move_vertical(self,dir):
+        if self.check_ladder(UP) and (dir == UP):
+                self.direction = UP
+                self.states = LAD
+        elif self.check_ladder(DOWN) and (dir == DOWN):
+                self.direction = DOWN
+                self.states = LAD
     
 ####------------------------------------
 
@@ -117,11 +123,19 @@ class Jsan:
 
         #左右が壁なら左右移動中止
         if self.sp.dx > 0:
-            if self.check_side_wall(RIGHT):
+            if self.check_wall(RIGHT):
                 self.sp.dx = 0
         elif self.sp.dx < 0:
-            if self.check_side_wall(LEFT):
+            if self.check_wall(LEFT):
                 self.sp.dx = 0
+
+        #上下が壁なら上下移動中止
+        if self.sp.dy > 0:
+            if self.check_wall(DOWN):
+                self.stop_move()
+        elif self.sp.dy < 0:
+            if self.check_wall(UP):
+                self.stop_move()
 
         # if pyxel.btnp(pyxel.KEY_SPACE) and (self.state in JUMPABLE):
                 # self.start_jump()
@@ -131,6 +145,13 @@ class Jsan:
         elif pyxel.btn(pyxel.KEY_D):
             self.run_horizontal(RIGHT)
         elif (pyxel.btnr(pyxel.KEY_A)) or (pyxel.btnr(pyxel.KEY_D)):
+            self.stop_move()
+        
+        if pyxel.btn(pyxel.KEY_W):
+            self.move_vertical(UP)
+        elif pyxel.btn(pyxel.KEY_S):
+            self.move_vertical(DOWN)
+        elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
             self.stop_move()
 
         self.sp.set_frame(self.states + self.direction)    
@@ -153,8 +174,8 @@ class Jsan:
         else:
             return(False)
         
-    def check_side_wall(self,dir):
-        """ 左右が壁で移動不可能ならTrueを返す。
+    def check_wall(self,dir):
+        """ 上下左右が壁で移動不可能ならTrueを返す。
             移動可能ならFalseを返す"""
         if dir == LEFT:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_T)
@@ -170,6 +191,20 @@ class Jsan:
                 return(False)
             else:
                 return(True)
+        if dir == UP:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
+            if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
+                return(True)
+            else:
+                return(False)
+        if dir == DOWN:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+            if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
+                return(True)
+            else:
+                return(False)
             
     def check_ladder(self,dir):
         """上下移動可能ならTrue, できなければFalse"""

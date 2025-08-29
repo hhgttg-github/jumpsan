@@ -51,3 +51,17 @@ def is_not_wall(x,y):
         return(True)
     else:
         return(False)
+
+def is_ladder(x,y):
+    if get_tile(x,y) == T_LADDER:
+        return(True)
+    else:
+        return(False)
+    
+def can_ud(x1,y1,x2,y2):
+    if is_wall(x1,y1) or is_wall(x2,y2):
+        return(False)
+    elif is_ladder(x1,y1) or is_ladder(x2,y2):
+        return(True)
+    else:
+        return(False)
