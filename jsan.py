@@ -25,6 +25,11 @@ LEFT_SIDE_B  = (-1, 7)
 RIGHT_SIDE_T = ( 8, 0)
 RIGHT_SIDE_B = ( 8, 7)
 
+TOP_CENTER1 = (3,0)
+TOP_CENTER2 = (4,0)
+BTM_CENTER1 = (3,8)
+BTM_CENTER2 = (4,8)
+
 def plus_tuple(x,y,t):
     return(x+t[0],y+t[1])
 
@@ -43,10 +48,10 @@ LAD  = 0b10000
 
 JUMPABLE = [STOP,RUN]
 
-HRZ_MOVE = 1024 # HORIZONTAL MOVE 横方向移動量
-VRT_MOVE = 1024
+HRZ_MOVE = 1000 # HORIZONTAL MOVE 横方向移動量
+VRT_MOVE = 1000
 
-FALL_Y_MAX = 1024       #落下の最高速度　これ以上は加速しない
+FALL_Y_MAX = 1000       #落下の最高速度　これ以上は加速しない
 
 ####====================================
 
@@ -221,18 +226,16 @@ class Jsan:
     def check_ladder(self,dir):
         """上下移動可能ならTrue, できなければFalse"""
         if dir == UP:
-            x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
-            x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
-            x3,y3 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
-            x4,y4 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-            if tl.can_ud(x1,y1,x2,y2) or tl.can_ud(x3,y3,x4,y4):
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER1)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER2)
+            if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
                 return(True)
             else:
                 return(False)
-        if dir == DOWN:
-            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
-            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-            if tl.can_ud(x1,y1,x2,y2):
+        elif dir == DOWN:
+            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER1)
+            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER2)
+            if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
                 return(True)
             else:
                 return(False)
