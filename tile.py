@@ -28,6 +28,10 @@ def get_tile(x,y):
     tl = pyxel.tilemaps[0].pget(x // 8, y // 8)
     return(TILE_DICT.get(tl, T_NONE))
 
+def pget_tile(x,y):
+    tl = pyxel.tilemaps[0].pget(x,y)
+    return(TILE_DICT.get(tl, T_NONE))
+
 def can_stand(x,y):
     if get_tile(x,y) in CAN_STAND:
         return(True)
@@ -68,6 +72,12 @@ def can_ud(x1,y1,x2,y2):
     
 def is_space(x,y):
     if get_tile(x,y) == T_NONE:
+        return(True)
+    else:
+        return(False)
+
+def is_ladder(x,y):
+    if get_tile(x,y) == T_LADDER:
         return(True)
     else:
         return(False)
