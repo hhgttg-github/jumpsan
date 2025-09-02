@@ -60,12 +60,18 @@ class Jsan:
 
     def __init__(self):
         self.sp = sp.AniSprite(0,0,0,0,2,STOP+LEFT,sp.sp8Group)
-        
-        self.base = self.sp.y + self.sp.h
+        self.xx = self.sp.x // 8
+        self.yy = self.sp.y // 8
+        self.fit = True
+
+        self.tile       = tl.pget_tile(self.xx,self.yy)
+        self.tile_up    = tl.pget_tile(self.xx,self.yy-1)
+        self.tile_down  = tl.pget_tile(self.xx,self.yy+1)
+        self.tile_left  = tl.pget_tile(self.xx-1,self.yy)
+        self.tile_right = tl.pget_tile(self.xx+1,self.yy)
         
         self.direction = LEFT
         self.states = STOP
-        self.v_speed = 0
 
         self.sp.add_frame(STOP+LEFT ,[0],0,(0,0))
         self.sp.add_frame(RUN+LEFT  ,[1,2,3,2],3,(HRZ_MOVE*(-1),0))
@@ -123,6 +129,9 @@ class Jsan:
 ####------------------------------------
 
     def update(self):
+
+        self.update_xxyy()
+
         if pyxel.btn(pyxel.KEY_A):
             self.run_horizontal(LEFT)
         elif pyxel.btn(pyxel.KEY_D):
@@ -242,3 +251,49 @@ class Jsan:
                 return(True)
             else:
                 return(False)
+
+
+####====================================
+
+    def update_xxyy(self):
+        self.xx = self.sp.x // 8
+        self.yy = self.sp.y // 8
+        self.fit = self.is_fit()
+    
+    def update_tile(self):
+        self.tile = tl.pget_tile(self.xx,self.yy)
+        self.tile_up = tl.pget_tile(self.xx,self.yy-1)
+        self.tile_down = tl.pget_tile(self.xx,self.yy+1)
+        self.tile_left = tl.pget_tile(self.xx-1,self.yy)
+        self.tile_right = tl.pget_tile(self.xx+1,self.yy)
+
+    def is_fit(self):
+        if (self.sp.x % JS_WIDTH == 0) and (self.sp.y % JS_HEIGHT == 0):
+            return(True)
+        else:
+            return(False)
+
+####====================================
+
+    def update_T_NONE(self):
+        if self.tile_down == tl.T_WALL:
+            self.states = STOP
+        elif self.tile_down == tl.T_LADDER:
+            self.states = STOP
+        else:
+            self.states = FALL
+
+    def update_FALL(self):
+        if self.check_freefall():
+            self.move_vertical(DOWN)
+        else:
+            self.states = STOP
+            
+    def update_RUN(self):
+        if self.direction == LEFT:
+            if self.check_wall(LEFT):
+                self.states = STOP
+
+
+
+        
