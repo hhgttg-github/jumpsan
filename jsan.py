@@ -42,21 +42,25 @@ RIGHT = 0b000001
 
 STOP_L = 0b000000
 STOP_R = 0b000001
-RUN_L  = 0b001000
-RUN_R  = 0b001001
-JUMP_L = 0b010000
-JUMP_R = 0b010001
-FALL_L = 0b011000
-FALL_R = 0b011001
+RUN_L  = 0b000100
+RUN_R  = 0b000101
+JUMP_L = 0b001000
+JUMP_R = 0b001001
+FALL_L = 0b010000
+FALL_R = 0b010001
 LAD_UP = 0b100000
 LAD_DN = 0b100001
 
 STOP_MASK = 0b000000
-RUN_MASK  = 0b001000
-FALL_MASK = 0b011000
+RUN_MASK  = 0b000100
+JUMP_MASK = 0b001000
+FALL_MASK = 0b010000
 LR_MASK   = 0b000001
 UD_MASK   = 0b000001
 LAD_MASK  = 0b100000
+
+def is_mask_true(b,m):
+    return((b & m) == m)
 
 JUMPABLE = [STOP_L,STOP_R,RUN_L,RUN_R]
 
@@ -139,18 +143,18 @@ class Jsan:
 ####------------------------------------
 
     def start_fall(self):
-        print("start_fall")
         self.states = FALL_MASK | self.get_direction()
         self.sp.set_frame(self.states)
 
     def stop_fall(self):
+        self.states = STOP_MASK | self.get_direction()
         self.dy = 0
+        self.sp.set_frame(self.states)
 
 ####------------------------------------
 
     def update(self):
 
-        self.check_corner() #revert_xy含む
 
         if pyxel.btn(pyxel.KEY_A):
             self.run_horizontal(LEFT)
@@ -168,13 +172,15 @@ class Jsan:
 
         if self.is_freefall():
             self.start_fall()
-        elif self.is_falling and self.can_stand():
-            self.check_corner()
+        if self.is_falling() and self.can_stand():
+            print(f"self.states = {self.states}")
+            print(f"is_falling = {self.is_falling()}")
             self.stop_fall()
         
         #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
         #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
+        self.check_corner() #revert_xy含む
 
         self.sp.update()
 
@@ -197,12 +203,6 @@ class Jsan:
         #        return(True)
         # else:
         #    return(False)
-    
-    def is_falling(self):
-        if (self.states & FALL_MASK):
-            return(True)
-        else:
-            return(False)
     
     def can_stand(self):
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
