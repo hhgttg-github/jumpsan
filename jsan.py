@@ -25,29 +25,40 @@ LEFT_SIDE_B  = (-1, 7)
 RIGHT_SIDE_T = ( 8, 0)
 RIGHT_SIDE_B = ( 8, 7)
 
-
-BTM_UP1 = (3,7)
-BTM_UP2 = (4,7)
-BTM_DOWN1 = (3,8)
-BTM_DOWN2 = (4,8)
+TOP_CENTER1 = (3,0)
+TOP_CENTER2 = (4,0)
+BTM_CENTER1 = (3,7)
+BTM_CENTER2 = (4,7)
+UNDER_CENTER1 = (3,8)
+UNDER_CENTER2 = (4,8)
 
 def plus_tuple(x,y,t):
     return(x+t[0],y+t[1])
 
 # STATES
 
-LEFT = 0b00000
-RIGHT = 0b00001
-UP    = 0b00010
-DOWN  = 0b00011
+LEFT  = 0b000000
+RIGHT = 0b000001
 
-STOP = 0b00000
-RUN  = 0b00100
-JUMP = 0b01000
-FALL = 0b01100
-LAD  = 0b10000
+STOP_L = 0b000000
+STOP_R = 0b000001
+RUN_L  = 0b001000
+RUN_R  = 0b001001
+JUMP_L = 0b010000
+JUMP_R = 0b010001
+FALL_L = 0b011000
+FALL_R = 0b011001
+LAD_UP = 0b100000
+LAD_DN = 0b100001
 
-JUMPABLE = [STOP,RUN]
+STOP_MASK = 0b000000
+RUN_MASK  = 0b001000
+FALL_MASK = 0b011000
+LR_MASK   = 0b000001
+UD_MASK   = 0b000001
+LAD_MASK  = 0b100000
+
+JUMPABLE = [STOP_L,STOP_R,RUN_L,RUN_R]
 
 HRZ_MOVE = 1000 # HORIZONTAL MOVE 横方向移動量
 VRT_MOVE = 1000
@@ -59,112 +70,111 @@ FALL_Y_MAX = 1000       #落下の最高速度　これ以上は加速しない
 class Jsan:
 
     def __init__(self):
-        self.sp = sp.AniSprite(0,0,0,0,2,STOP+LEFT,sp.sp8Group)
-        
-        self.base = self.sp.y + self.sp.h
-        
-        self.direction = LEFT
-        self.states = STOP
-        self.v_speed = 0
+        self.sp = sp.AniSprite(0,0,0,0,2,STOP_L,sp.sp8Group)
 
-        self.sp.add_frame(STOP+LEFT ,[0],0,(0,0))
-        self.sp.add_frame(RUN+LEFT  ,[1,2,3,2],3,(HRZ_MOVE*(-1),0))
-        self.sp.add_frame(JUMP+LEFT ,[8],0,None)
-        self.sp.add_frame(FALL+LEFT ,[8],0,None)
-        self.sp.add_frame(STOP+RIGHT,[4],0,(0,0))
-        self.sp.add_frame(RUN+RIGHT ,[5,6,7,6],3,(HRZ_MOVE,0))
-        self.sp.add_frame(JUMP+RIGHT,[9],0,None)
-        self.sp.add_frame(FALL+RIGHT,[9],0,None)
-        self.sp.add_frame(LAD+LEFT  ,[0],0,(0,0))
-        self.sp.add_frame(LAD+RIGHT ,[0],0,(0,0))
-        self.sp.add_frame(LAD+UP    ,[10,11],3,(0,VRT_MOVE*(-1)))
-        self.sp.add_frame(LAD+DOWN  ,[10,11],3,(0,VRT_MOVE))
+        self.states = STOP_L
+
+        self.sp.add_frame(STOP_L ,[0],0,(0,0))
+        self.sp.add_frame(RUN_L  ,[1,2,3,2],3,(HRZ_MOVE*(-1),None))
+        self.sp.add_frame(JUMP_L ,[8],0,None)
+        self.sp.add_frame(FALL_L ,[8],0,(None,VRT_MOVE))
+        self.sp.add_frame(STOP_R ,[4],0,(0,0))
+        self.sp.add_frame(RUN_R  ,[5,6,7,6],3,(HRZ_MOVE,0))
+        self.sp.add_frame(JUMP_R ,[9],0,None)
+        self.sp.add_frame(FALL_R ,[9],0,(None,VRT_MOVE))
+        self.sp.add_frame(LAD_UP ,[10,11],3,(0,VRT_MOVE*(-1)))
+        self.sp.add_frame(LAD_DN ,[10,11],3,(0,VRT_MOVE))
 
 ####------------------------------------
 
-    def stop_move(self):
-        self.direction = LEFT
-        self.states = STOP
+    def get_direction(self):
+        return(self.states & LR_MASK)
+    
+    def on_ladder(self):
+        return(self.states & LAD_MASK)
+
+    def is_falling(self):
+        return(self.states & FALL_MASK)
+    
+####------------------------------------
+
+    def stop_horizontal_move(self):
+        print("stop_horizontal")
+        if self.is_falling():
+            self.sp.dx = 0
+            if self.can_stand():
+                self.stop_fall()    
+        else:
+            self.states = STOP_MASK | self.get_direction()
+        self.sp.set_frame(self.states)
 
 ####------------------------------------
 
     def run_horizontal(self,dir):
-        if dir == LEFT:
-            if not(self.check_wall(LEFT)):
-                self.direction = dir
-                self.states = RUN
-        elif dir == RIGHT:
-            if not(self.check_wall(RIGHT)):
-                self.direction = dir
-                self.states = RUN
+        self.states = RUN_MASK | dir
+        self.sp.set_frame(self.states)
 
 ####------------------------------------
 
-    def move_vertical(self,dir):
-        if self.check_ladder(UP) and (dir == UP):
-            if not(self.check_wall(UP)):
-                self.direction = UP
-                self.states = LAD
-        elif self.check_ladder(DOWN) and (dir == DOWN):
-            if not(self.check_wall(DOWN)):
-                self.direction = DOWN
-                self.states = LAD
-    
+    def move_vertical(self):
+        pass
+
+    def stop_vertical_move(self):
+        self.sp.dy = 0
+        self.states = STOP_MASK | self.get_direction()
+        self.sp.set_frame(self.states)
+
+
+        # if self.direction == UP:
+        #     if not(self.is_passable(UP)):
+        #         self.states = STOP
+        #     elif self.check_ladder(UP):
+        #         self.direction = UP
+        #         self.states = LAD
+        # if self.direction == DOWN:
+        #     if not(self.is_passable(DOWN)):
+        #         self.states = STOP
+        #     elif self.check_ladder(DOWN):
+                
 ####------------------------------------
 
     def start_fall(self):
-        self.states = FALL
-        self.sp.dy = FALL_Y_MAX
+        print("start_fall")
+        self.states = FALL_MASK | self.get_direction()
+        self.sp.set_frame(self.states)
 
     def stop_fall(self):
-        self.states = STOP
-        self.sp.dy = 0
+        self.dy = 0
 
 ####------------------------------------
 
     def update(self):
+
+        self.check_corner() #revert_xy含む
+
         if pyxel.btn(pyxel.KEY_A):
             self.run_horizontal(LEFT)
         elif pyxel.btn(pyxel.KEY_D):
             self.run_horizontal(RIGHT)
         elif (pyxel.btnr(pyxel.KEY_A)) or (pyxel.btnr(pyxel.KEY_D)):
-            self.stop_move()
+            self.stop_horizontal_move()
         
-        if pyxel.btn(pyxel.KEY_W):
-            self.move_vertical(UP)
-        elif pyxel.btn(pyxel.KEY_S):
-            self.move_vertical(DOWN)
-        elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
-            self.stop_move()
+        # if pyxel.btn(pyxel.KEY_W):
+        #     self.move_vertical(LAD_UP)
+        # elif pyxel.btn(pyxel.KEY_S):
+        #     self.move_vertical(LAD_DN)
+        # elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
+        #     self.stop_vertical_move()
 
-        self.sp.set_frame(self.states + self.direction)
-        #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
-        #### dx,dy,statesなどの修正をしてから、最終アップデートを！
-        
-        if (self.states == FALL) and (self.can_stand()):
-            self.stop_fall()
-        
         if self.is_freefall():
             self.start_fall()
+        elif self.is_falling and self.can_stand():
+            self.check_corner()
+            self.stop_fall()
+        
+        #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
+        #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
-        #左右が壁なら左右移動中止
-        if self.sp.dx > 0:
-            if self.check_wall(RIGHT):
-                self.sp.dx = 0
-        elif self.sp.dx < 0:
-            if self.check_wall(LEFT):
-                self.sp.dx = 0
-
-        #落下中、下が壁/梯子なら下移動中止
-        if self.states == FALL:
-            if self.check_wall(DOWN) or self.check_ladder(DOWN):
-                self.stop_fall()
-
-        #上下移動中、上下が壁なら停止
-        if self.sp.dy > 0 and self.check_wall(DOWN):
-                self.stop_move()
-        elif self.sp.dy < 0 and self.check_wall(UP):
-                self.stop_move()
 
         self.sp.update()
 
@@ -176,49 +186,60 @@ class Jsan:
 ####====================================
 
     def is_freefall(self):
-        """足元が空間で落下するかどうか"""
-        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
-        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-        if tl.is_space(x1,y1) and tl.is_space(x2,y2):
+        """落下開始にするかどうか"""
+        if self.check_ladder() or self.can_stand():   #梯子に掴まっている・立っているなら、
+            return(False)
+        else:
+            return(True)
+        #     x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+        #     x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
+        #     if tl.is_space(x1,y1) and tl.is_space(x2,y2):
+        #        return(True)
+        # else:
+        #    return(False)
+    
+    def is_falling(self):
+        if (self.states & FALL_MASK):
             return(True)
         else:
             return(False)
-        
+    
     def can_stand(self):
-        """足元が床/梯子で立つことができればTrue
-            落下するならFalse"""
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
         x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-        if (tl.can_stand(x1,y1)) or (tl.can_stand(x2,y2)):
+#        x3,y3 = plus_tuple(self.sp.x,self.sp.y,UNDER_CENTER1)
+#        x4,y4 = plus_tuple(self.sp.x,self.sp.y,UNDER_CENTER2)
+#        if tl.can_stand(x1,y1) or tl.can_stand(x2,y2) or tl.can_stand(x3,y3) or tl.can_stand(x4,y4):
+        if tl.can_stand(x1,y1) or tl.can_stand(x2,y2):
             return(True)
         else:
             return(False)
         
-    def check_wall(self,dir):
-        """ 上下左右が壁で移動不可能ならFalseを返す。
-            移動可能ならTrueを返す"""
-        if dir == LEFT:
+    def is_passable(self):
+        """ 上下左右が壁で移動できなければならFalseを返す。
+            壁以外で移動可能ならならTrueを返す"""
+        if self.get_direction() == LEFT:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_T)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,LEFT_SIDE_B)
-            if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
+            if tl.is_passable(x1,y1) and tl.is_passable(x2,y2):
                 return(True)
             else:
                 return(False)
-        if dir == RIGHT:
+        elif self.get_direction() == RIGHT:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_T)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,RIGHT_SIDE_B)
-            if tl.can_pass(x1,y1) and tl.can_pass(x2,y2):
+            if tl.is_passable(x1,y1) and tl.is_passable(x2,y2):
                 return(True)
             else:
                 return(False)
-        if dir == UP:
+        elif self.states == LAD_UP:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
             if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
                 return(False)
             else:
                 return(True)
-        if dir == DOWN:
+        elif self.states == LAD_DN:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
             if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
@@ -226,19 +247,27 @@ class Jsan:
             else:
                 return(True)
             
-    def check_ladder(self,dir):
+    def check_ladder(self):
         """上下移動可能ならTrue, できなければFalse"""
-        if dir == UP:
-            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_UP1)
-            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_UP2)
-            if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
-                return(True)
-            else:
-                return(False)
-        elif dir == DOWN:
-            x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_DOWN1)
-            x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_DOWN2)
-            if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
-                return(True)
-            else:
-                return(False)
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER1)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER2)
+        x3,y3 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER1)
+        x4,y4 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER2)
+
+        if (tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2)) or (tl.is_ladder(x3,y3) and tl.is_ladder(x4,y4)):
+            return(True)
+        else:
+            return(False)
+
+####====================================
+
+    def check_corner(self):
+        revert=False
+        for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
+            cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
+            if tl.is_wall(cx,cy):
+                revert = True
+        if revert:
+            self.sp.revert_xy()
+
+        

@@ -38,7 +38,7 @@ def can_stand(x,y):
     else:
         return(False)
 
-def can_pass(x,y):
+def is_passable(x,y):
     if get_tile(x,y) == T_WALL:
         return(False)
     else:

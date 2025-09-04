@@ -174,15 +174,21 @@ class Sprite():
             self.prev_dy = self.dy
         self.tx += self.dx
         self.ty += self.dy
+        self.px = self.x
+        self.py = self.y
         if abs(self.tx) >= THRESHOULD:
 #            self.x += round(self.tx/THRESHOULD)
-            self.px = self.x
-            self.x += self.tx >> THRESHOULD_BIT
+            if self.tx < 0:
+                self.x -= abs(self.tx) >> THRESHOULD_BIT
+            else:
+                self.x += self.tx >> THRESHOULD_BIT
             self.tx = 0
         if abs(self.ty) >= THRESHOULD:
 #            self.y += round(self.ty/THRESHOULD)
-            self.py = self.y
-            self.y += self.ty >> THRESHOULD_BIT
+            if self.ty < 0:
+                self.y -= abs(self.ty) >> THRESHOULD_BIT
+            else:
+                self.y += self.ty >> THRESHOULD_BIT
             self.ty = 0
     
     def draw(self):
@@ -258,7 +264,7 @@ class AniSprite(Sprite):
             l[-1] = 0
             self.change_table[key] = l
         self.interval_table[key] = interval
-        self.speed_table[key] = speed        # None or (dx,dy) tuple
+        self.speed_table[key] = speed        # (dx,dy)/(dx,None)/(None,dy) tuple
         
     def set_frame(self,key):
         if self.previous_key == key:
@@ -267,8 +273,9 @@ class AniSprite(Sprite):
             self.key = key
             self.frame_index = 0
             self.interval = self.interval_table[key]
-            if not(self.speed_table[key]==None):
+            if not(self.speed_table[key][0] == None):
                 self.dx = self.speed_table[key][0]
+            if not(self.speed_table[key][1] == None):
                 self.dy = self.speed_table[key][1]
         
     def update(self):
