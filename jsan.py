@@ -39,6 +39,8 @@ def plus_tuple(x,y,t):
 
 LEFT  = 0b000000
 RIGHT = 0b000001
+UP    = 0b000000
+DOWN  = 0b000001
 
 STOP_L = 0b000000
 STOP_R = 0b000001
@@ -64,8 +66,8 @@ def is_mask_true(b,m):
 
 JUMPABLE = [STOP_L,STOP_R,RUN_L,RUN_R]
 
-HRZ_MOVE = 1000 # HORIZONTAL MOVE 横方向移動量
-VRT_MOVE = 1000
+HRZ_MOVE = 1200 # HORIZONTAL MOVE 横方向移動量
+VRT_MOVE = 1200
 
 FALL_Y_MAX = 1000       #落下の最高速度　これ以上は加速しない
 
@@ -95,10 +97,10 @@ class Jsan:
         return(self.states & LR_MASK)
     
     def on_ladder(self):
-        return(self.states & LAD_MASK)
+        return(is_mask_true(self.states,LAD_MASK))
 
     def is_falling(self):
-        return(self.states & FALL_MASK)
+        return(is_mask_true(self.states, FALL_MASK))
     
 ####------------------------------------
 
@@ -120,25 +122,19 @@ class Jsan:
 
 ####------------------------------------
 
-    def move_vertical(self):
-        pass
+    def move_ladder(self,dir):
+        if self.on_ladder():
+            if dir == UP:
+                if self.check_ladder() and not(self.check_bonk_head):
+                    self.states = LAD_UP
+            if dir == DOWN:
+                if self.check_ladder() and not(self.check_on_wall):
+                    self.states = LAD_DN
 
     def stop_vertical_move(self):
         self.sp.dy = 0
         self.states = STOP_MASK | self.get_direction()
         self.sp.set_frame(self.states)
-
-
-        # if self.direction == UP:
-        #     if not(self.is_passable(UP)):
-        #         self.states = STOP
-        #     elif self.check_ladder(UP):
-        #         self.direction = UP
-        #         self.states = LAD
-        # if self.direction == DOWN:
-        #     if not(self.is_passable(DOWN)):
-        #         self.states = STOP
-        #     elif self.check_ladder(DOWN):
                 
 ####------------------------------------
 
@@ -163,24 +159,22 @@ class Jsan:
         elif (pyxel.btnr(pyxel.KEY_A)) or (pyxel.btnr(pyxel.KEY_D)):
             self.stop_horizontal_move()
         
-        # if pyxel.btn(pyxel.KEY_W):
-        #     self.move_vertical(LAD_UP)
-        # elif pyxel.btn(pyxel.KEY_S):
-        #     self.move_vertical(LAD_DN)
-        # elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
-        #     self.stop_vertical_move()
+        if pyxel.btn(pyxel.KEY_W):
+            self.move_ladder(UP)
+        elif pyxel.btn(pyxel.KEY_S):
+            self.move_ladder(DOWN)
+        elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
+            self.stop_vertical_move()
 
         if self.is_freefall():
             self.start_fall()
         if self.is_falling() and self.can_stand():
-            print(f"self.states = {self.states}")
-            print(f"is_falling = {self.is_falling()}")
             self.stop_fall()
         
         #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
         #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
-        self.check_corner() #revert_xy含む
+        self.check_corner_wall() #revert_xy含む
 
         self.sp.update()
 
@@ -259,9 +253,27 @@ class Jsan:
         else:
             return(False)
 
+    def check_bonk_head(self):
+        """上方向が壁に当たるならTrue"""
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_B)
+        if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
+            return(True)
+        else:
+            return(False)
+        
+    def check_on_wall(self):
+        """下方向が壁に当たるならTrue"""
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_B)
+        if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
+            return(True)
+        else:
+            return(False)
+        
 ####====================================
 
-    def check_corner(self):
+    def check_corner_wall(self):
         revert=False
         for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
             cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
@@ -270,4 +282,10 @@ class Jsan:
         if revert:
             self.sp.revert_xy()
 
-        
+    def check_corner_ladder(self):
+        for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
+            cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
+            if tl.is_ladder(cx,cy):
+                return(True)
+            else:
+                return(False)
