@@ -125,19 +125,23 @@ class Jsan:
         elif pyxel.btn(pyxel.KEY_S):
             self.move_ladder(DOWN)
         elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
-            self.stop_vertical_move()
+            if is_mask_true(self.states, LAD_MASK):
+                self.stop_vertical_move()
 
-        if self.is_freefall():
-            self.start_fall()
-        if self.is_falling() and self.can_stand():
-            self.stop_fall()
-        
         #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
         #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
-        self.check_corner_wall() #revert_xy含む
+        self.check_4corner_wall() #revert_xy含む
         self.check_btm_corner_wall()
-        
+
+        if self.is_falling() and self.can_stand():
+             self.stop_fall()
+        elif self.is_freefall():
+            self.start_fall()
+
+        ####
+        ####
+
         self.sp.set_frame(self.states)
         self.sp.update()
 
@@ -156,7 +160,9 @@ class Jsan:
 ####------------------------------------
 
     def stop_horizontal_move(self):
-        if self.is_falling():
+        if self.is_freefall:
+            self.start_fall()
+        elif self.is_falling():
             self.sp.dx = 0
             if self.can_stand():
                 self.stop_fall()    
@@ -170,8 +176,9 @@ class Jsan:
     def is_freefall(self):
         """落下開始にするかどうか"""
         if (
-            self.check_ladder_up() or 
-            self.check_ladder_down() or 
+            self.check_ladder_top() or 
+            self.check_ladder_btm() or
+            self.check_ladder_belwo_btm() or
             self.can_stand()
             ):
             return(False)   # 梯子や床の上なら、落ちない
@@ -186,7 +193,10 @@ class Jsan:
 ####------------------------------------
 
     def stop_fall(self):
-        self.states = STOP_MASK | self.get_direction()
+        if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
+            self.states = RUN_MASK | self.get_direction(_)
+        else:
+            self.states = STOP_MASK | self.get_direction()
 
 ####====================================
 ####
@@ -222,6 +232,9 @@ class Jsan:
 
     def check_ladder_up(self):
         """上移動可能ならTrue, できなければFalse"""
+        if self.states == LAD_UP:
+            if self.check_4corner_space() and self.can_stand():
+                return(False)
         if self.check_ladder_top() or self.check_ladder_btm():
             return(True)
         else:
@@ -339,7 +352,7 @@ class Jsan:
         
 ####====================================
 
-    def check_corner_wall(self): # JSAN スプライトの四隅のドットが壁ならば
+    def check_4corner_wall(self): # JSAN スプライトの四隅のドットが壁ならば
         revert=False
         for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
             cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
@@ -357,10 +370,18 @@ class Jsan:
         if revert:
             self.sp.y = -1
 
-    def check_corner_ladder(self):
+    def check_4corner_ladder(self):
         for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
             cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
             if tl.is_ladder(cx,cy):
+                return(True)
+            else:
+                return(False)
+            
+    def check_4corner_space(self):
+        for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
+            cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
+            if tl.is_space(cx,cy):
                 return(True)
             else:
                 return(False)
