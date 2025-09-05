@@ -136,7 +136,9 @@ class Jsan:
         #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
         self.check_corner_wall() #revert_xy含む
-
+        self.check_btm_corner_wall()
+        
+        self.sp.set_frame(self.states)
         self.sp.update()
 
 ####------------------------------------
@@ -150,19 +152,16 @@ class Jsan:
 
     def run_horizontal(self,dir):
         self.states = RUN_MASK | dir
-        self.sp.set_frame(self.states)
 
 ####------------------------------------
 
     def stop_horizontal_move(self):
-        print("stop_horizontal")
         if self.is_falling():
             self.sp.dx = 0
             if self.can_stand():
                 self.stop_fall()    
         else:
             self.states = STOP_MASK | self.get_direction()
-        self.sp.set_frame(self.states)
 
 ####====================================
 ####
@@ -170,56 +169,98 @@ class Jsan:
 
     def is_freefall(self):
         """落下開始にするかどうか"""
-        if self.check_ladder() or self.can_stand():   #梯子に掴まっている・立っているなら、
-            return(False)
+        if (
+            self.check_ladder_up() or 
+            self.check_ladder_down() or 
+            self.can_stand()
+            ):
+            return(False)   # 梯子や床の上なら、落ちない
         else:
-            return(True)
+            return(True)    # そうでなければ落ちる
 
 ####------------------------------------
 
     def start_fall(self):
         self.states = FALL_MASK | self.get_direction()
-        self.sp.set_frame(self.states)
 
 ####------------------------------------
 
     def stop_fall(self):
         self.states = STOP_MASK | self.get_direction()
-        self.dy = 0
-        self.sp.set_frame(self.states)
 
 ####====================================
 ####
 #### LADDER
-
-    def check_ladder(self):
-        """上下移動可能ならTrue, できなければFalse"""
-        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER1)
-        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER2)
-        x3,y3 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER1)
-        x4,y4 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER2)
-        if (tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2)) or (tl.is_ladder(x3,y3) and tl.is_ladder(x4,y4)):
+    
+    def check_ladder_top(self):  # 頭正中2ドットが梯子か？
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER1)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_CENTER2)
+        if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
             return(True)
         else:
             return(False)
         
+    def check_ladder_btm(self):  # 足元正中2ドットが梯子か？
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER1)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER2)
+        if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
+            return(True)
+        else:
+            return(False)
+        
+    def check_ladder_below_btm(self):  # 足元正中の下の2ドットが梯子か？
+        x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER1)
+        y1 += 1
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_CENTER2)
+        y2 += 1
+        if tl.is_ladder(x1,y1) and tl.is_ladder(x2,y2):
+            return(True)
+        else:
+            return(False)
+
+####------------------------------------
+
+    def check_ladder_up(self):
+        """上移動可能ならTrue, できなければFalse"""
+        if self.check_ladder_top() or self.check_ladder_btm():
+            return(True)
+        else:
+            return(False)
+
+    def check_ladder_down(self):
+        """下移動可能ならTrue, できなければFalse"""
+        if (self.check_ladder_top() or
+            self.check_ladder_btm() or
+            self.check_ladder_below_btm()):
+            return(True)
+        else:
+            return(False)
+
 ####------------------------------------
 
     def move_ladder(self,dir):
-        if self.on_ladder():
-            if dir == UP:
-                if self.check_ladder() and not(self.check_bonk_head):
-                    self.states = LAD_UP
-            if dir == DOWN:
-                if self.check_ladder() and not(self.check_on_the_wall):
-                    self.states = LAD_DN
+        
+        # 上移動が可能なら登る
+        if (
+            (dir == UP) and
+            (self.check_ladder_up()) and 
+            not(self.check_bonk_head())
+            ):
+            self.states = LAD_UP
+        
+        # 下移動が可能なら下る
+        elif (
+            (dir == DOWN) and
+            (self.check_ladder_down()) and
+            not(self.check_on_the_wall())
+            ):
+            self.states = LAD_DN
 
 ####------------------------------------
 
     def stop_vertical_move(self):
         self.sp.dy = 0
         self.states = STOP_MASK | self.get_direction()
-        self.sp.set_frame(self.states)
 
 ####====================================
 ####
@@ -231,7 +272,9 @@ class Jsan:
 
     def is_freefall(self):
         """落下開始にするかどうか"""
-        if self.check_ladder() or self.can_stand():   #梯子に掴まっている・立っているなら、
+        if (self.check_ladder_up() or
+            self.check_ladder_down() or
+            self.can_stand()):   #梯子に掴まっている・立っているなら、
             return(False)
         else:
             return(True)
@@ -239,9 +282,6 @@ class Jsan:
     def can_stand(self):
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
         x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
-#        x3,y3 = plus_tuple(self.sp.x,self.sp.y,UNDER_CENTER1)
-#        x4,y4 = plus_tuple(self.sp.x,self.sp.y,UNDER_CENTER2)
-#        if tl.can_stand(x1,y1) or tl.can_stand(x2,y2) or tl.can_stand(x3,y3) or tl.can_stand(x4,y4):
         if tl.can_stand(x1,y1) or tl.can_stand(x2,y2):
             return(True)
         else:
@@ -282,7 +322,7 @@ class Jsan:
     def check_bonk_head(self):
         """上方向が壁に当たるならTrue"""
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
-        x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_B)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
         if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
             return(True)
         else:
@@ -291,7 +331,7 @@ class Jsan:
     def check_on_the_wall(self):
         """下方向が壁に当たるならTrue"""
         x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
-        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_B)
+        x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
         if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
             return(True)
         else:
@@ -308,6 +348,15 @@ class Jsan:
         if revert:
             self.sp.revert_xy()
 
+    def check_btm_corner_wall(self): # 下２隅のどちらかが壁なら1ドット位置ずらす
+        revert = False
+        for i in (BTMLEFT,BTMRIGHT):
+            cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
+            if tl.is_wall(cx,cy):
+                revert = True
+        if revert:
+            self.sp.y = -1
+
     def check_corner_ladder(self):
         for i in (TOPLEFT,TOPRIGHT,BTMLEFT,BTMRIGHT):
             cx,cy = plus_tuple(self.sp.x,self.sp.y, i)
@@ -316,9 +365,7 @@ class Jsan:
             else:
                 return(False)
 
-
-
-#### 梯子に手足がかかっているか？
+#### 現在のstatesは梯子の昇降中か？
 
     def on_ladder(self):
         return(is_mask_true(self.states,LAD_MASK))
