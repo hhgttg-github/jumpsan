@@ -35,8 +35,12 @@ DOT32     = 32       # 32dot = 8sp x 3行（24sp)
 DOT32_Y   = 160
 DOT32_ROW = 3
 
+####------------------------------------
+
 THRESHOULD = 1024
 THRESHOULD_BIT = 10
+
+####------------------------------------
 
 SCREEN_LEFT   = 0
 SCREEN_TOP    = 0
@@ -141,10 +145,14 @@ class SpList():
 
 class Sprite():
     def __init__(self, x, y, id, hit, sp_group):
+        self.show = True
+        self.stop_move = False
         self.x = x
         self.y = y
-        self.px = x
-        self.py = y
+        self.previous_x = x
+        self.previous_y = y
+        self.vector_x = 0
+        self.vector_y = 0
         self.sp_group = sp_group
         self.img = sp_group.img
         self.id  = id
@@ -152,60 +160,112 @@ class Sprite():
         self.w = sp_group.w
         self.u   = sp_group.id_list[self.id][0]
         self.v   = sp_group.id_list[self.id][1]
-        self.show = True
         self.dx = 0
-        self.prev_dx = 0
         self.dy = 0
-        self.prev_dy = 0
         self.tx = 0
         self.ty = 0
         self.hit = hit
         self.hit_h = self.h - hit * 2
         self.hit_w = self.w - hit * 2
-            
-    def update(self):
-        if (((self.dx > 0) and (self.prev_dx < 0)) or 
-            ((self.dx < 0) and (self.prev_dx > 0))):
-            self.tx = 0
-            self.prev_dx = self.dx
-        if (((self.dy > 0) and (self.prev_dy < 0)) or 
-            ((self.dy < 0) and (self.prev_dy > 0))):
-            self.ty = 0
-            self.prev_dy = self.dy
-        self.tx += self.dx
-        self.ty += self.dy
-        self.px = self.x
-        self.py = self.y
-        if abs(self.tx) >= THRESHOULD:
-#            self.x += round(self.tx/THRESHOULD)
-            if self.tx < 0:
-                self.x -= abs(self.tx) >> THRESHOULD_BIT
-            else:
-                self.x += self.tx >> THRESHOULD_BIT
-            self.tx = 0
-        if abs(self.ty) >= THRESHOULD:
-#            self.y += round(self.ty/THRESHOULD)
-            if self.ty < 0:
-                self.y -= abs(self.ty) >> THRESHOULD_BIT
-            else:
-                self.y += self.ty >> THRESHOULD_BIT
-            self.ty = 0
+
+####------------------------------------
+
+    def speed(self,dx,dy): #dx,dyは必ず正の数。方向はvector_x,yの正負で。
+        self.dx = dx
+        self.dy = dy
+
+    def reset_direction(self):
+        self.set_direction(0,0)
     
+    def set_direction(self,x,y):
+        self.set_dir_x = x
+        self.set_dir_y = y
+
+    def set_dir_x(self,x): # 方向を変える毎にtx,tyそれぞれが0にリセットされる
+        self.vector_x = x
+        self.tx = 0
+
+    def set_dir_y(self,y):
+        self.vector_y = y
+        self.ty = 0
+
+####------------------------------------
+
+    def next_pos(self):
+        txx = self.tx
+        tyy = self.ty
+        xx = self.x
+        yy = self.y
+        if not(self.vector_x == 0):
+            txx += self.dx
+        if not(self.vector_y == 0):
+            tyy += self.dy
+        if txx >= THRESHOULD:
+            xx += self.vector_x
+        if tyy >= THRESHOULD:
+            yy += self.vector_y
+        return(xx,yy)
+    
+####------------------------------------
+
+    def update(self):
+        if self.stop_move == False:
+            if not(self.vector_x == 0):
+                self.tx += self.dx
+            if not(self.vector_y == 0):
+                self.ty += self.dy
+            if self.tx >= THRESHOULD:
+                self.previous_x = self.x
+                self.x = self.x + self.vector_x
+                self.tx = 0
+            if self.ty >= THRESHOULD:
+                self.previous_y = self.y
+                self.y = self.y + self.vector_y
+                self.ty = 0
+            
+#         if (((self.dx > 0) and (self.prev_dx < 0)) or 
+#             ((self.dx < 0) and (self.prev_dx > 0))):
+#             self.tx = 0
+#             self.prev_dx = self.dx
+#         if (((self.dy > 0) and (self.prev_dy < 0)) or 
+#             ((self.dy < 0) and (self.prev_dy > 0))):
+#             self.ty = 0
+#             self.prev_dy = self.dy
+#         self.tx += self.dx
+#         self.ty += self.dy
+#         self.previous_x = self.x
+#         self.previous_y = self.y
+#         if abs(self.tx) >= THRESHOULD:
+# #            self.x += round(self.tx/THRESHOULD)
+#             if self.tx < 0:
+#                 self.x -= abs(self.tx) >> THRESHOULD_BIT
+#             else:
+#                 self.x += self.tx >> THRESHOULD_BIT
+#             self.tx = 0
+#         if abs(self.ty) >= THRESHOULD:
+# #            self.y += round(self.ty/THRESHOULD)
+#             if self.ty < 0:
+#                 self.y -= abs(self.ty) >> THRESHOULD_BIT
+#             else:
+#                 self.y += self.ty >> THRESHOULD_BIT
+#             self.ty = 0
+
+####------------------------------------
+#   
     def draw(self):
         if self.show:
             pyxel.blt(self.x, self.y, self.img,
-                    self.u, self.v, self.h, self.w, 0)
-            
-    def speed(self,dx,dy):
-        self.dx = dx
-        self.dy = dy
-    
+                      self.u, self.v, self.h, self.w, 0)
+
+####------------------------------------
+#             
     def check_collision(self, sp):
         sprite_collision(self, sp)
 
     def revert_xy(self):
-        self.x = self.px
-        self.y = self.py
+        self.x = self.previous_x
+        self.y = self.previous_y
+
 #=======================================
 #
 # SWITCHING SPRITE
@@ -214,6 +274,7 @@ class SwitchingSp(Sprite):
     def __init__(self, x, y, id, hit, interval, sp_group):
         super().__init__(x, y, id, hit, sp_group)
         self.start = pyxel.frame_count
+        self.stop  = False
         self.interval = interval
         self.next = self.start + interval
         self.current = 0
@@ -221,10 +282,10 @@ class SwitchingSp(Sprite):
 
     def update(self):
         super().update()
-        if self.next <= pyxel.frame_count:
-            self.current = self.switch_table[self.current]
-            self.u, self.v = self.sp_group.return_uv(self.id + self.current)
-            self.next = pyxel.frame_count + self.interval
+        if self.stop == False:
+            if self.next <= pyxel.frame_count:
+                self.current = self.switch_table[self.current]
+                self.u, self.v = self.sp_group.return_uv(self.id + self.current)
 
 #=======================================
 #
@@ -235,6 +296,7 @@ class AniSprite(Sprite):
     def __init__(self,x,y,id,hit,interval,key,sp_group): #idは最初の画像番号
         super().__init__(x,y,id,hit,sp_group)
         
+        self.stop_animation = False
         self.start = pyxel.frame_count
         self.interval = interval #60fps なので60で1秒間隔でアニメーション
         self.next = self.start + interval
@@ -264,7 +326,7 @@ class AniSprite(Sprite):
             l[-1] = 0
             self.change_table[key] = l
         self.interval_table[key] = interval
-        self.speed_table[key] = speed        # (dx,dy)/(dx,None)/(None,dy) tuple
+        self.speed_table[key] = speed        # (dx,dy)...(-dx,-dy)
         
     def set_frame(self,key):
         if self.previous_key == key:
@@ -273,24 +335,25 @@ class AniSprite(Sprite):
             self.key = key
             self.frame_index = 0
             self.interval = self.interval_table[key]
-            if not(self.speed_table[key][0] == None):
-                self.dx = self.speed_table[key][0]
-            if not(self.speed_table[key][1] == None):
-                self.dy = self.speed_table[key][1]
+            self.dx = abs(self.speed_table[key][0])
+            self.dy = abs(self.speed_table[key][1])
+            self.vector_x = sign(self.speed_table[key][0])
+            self.vector_y = sign(self.speed_table[key][1])
         
     def update(self):
         super().update()
-        if self.next <= pyxel.frame_count:
-            self.start = pyxel.frame_count
-            self.next = self.start + self.interval
+        if self.stop_animation == False:
+            if self.next <= pyxel.frame_count:
+                self.start = pyxel.frame_count
+                self.next = self.start + self.interval
 
-            if self.key == self.previous_key:
-                self.frame_index = self.change_table[self.key][self.frame_index]
-            else:
-                self.frame_index = 0
-                self.previous_key = self.key                
-            self.id = self.frame[self.key][self.frame_index]
-            self.u, self.v = self.sp_group.return_uv(self.id)
+                if self.key == self.previous_key:
+                    self.frame_index = self.change_table[self.key][self.frame_index]
+                else:
+                    self.frame_index = 0
+                    self.previous_key = self.key                
+                self.id = self.frame[self.key][self.frame_index]
+                self.u, self.v = self.sp_group.return_uv(self.id)
 
 
 ####====================================

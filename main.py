@@ -27,4 +27,4 @@ class Game:
         self.js.draw()
 
 if __name__=="__main__":
-    Game()   
+    Game()
