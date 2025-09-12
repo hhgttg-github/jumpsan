@@ -37,8 +37,8 @@ DOT32_ROW = 3
 
 ####------------------------------------
 
-THRESHOULD = 1024
-THRESHOULD_BIT = 10
+#THRESHOULD = 1024
+DIFF_XY = 1
 
 ####------------------------------------
 
@@ -144,7 +144,7 @@ class SpList():
 # SIMPLE SPRITE
 
 class Sprite():
-    def __init__(self, x, y, id, hit, sp_group):
+    def __init__(self, x, y, thx, thy, id, hit, sp_group):
         self.show = True
         self.stop_move = False
         self.x = x
@@ -153,6 +153,8 @@ class Sprite():
         self.previous_y = y
         self.vector_x = 0
         self.vector_y = 0
+        self.th_x = thx
+        self.th_y = thy
         self.sp_group = sp_group
         self.img = sp_group.img
         self.id  = id
@@ -170,9 +172,9 @@ class Sprite():
 
 ####------------------------------------
 
-    def speed(self,dx,dy): #dx,dyは必ず正の数。方向はvector_x,yの正負で。
-        self.dx = dx
-        self.dy = dy
+    def threshould(self,thx,thy): #dx,dyは必ず正の数。方向はvector_x,yの正負で。
+        self.th_x = thx
+        self.th_y = thy
 
     def reset_direction(self):
         self.set_direction(0,0)
@@ -197,12 +199,12 @@ class Sprite():
         xx = self.x
         yy = self.y
         if not(self.vector_x == 0):
-            txx += self.dx
+            txx = self.tx + DIFF_XY
         if not(self.vector_y == 0):
-            tyy += self.dy
-        if txx >= THRESHOULD:
+            tyy = self.ty + DIFF_XY
+        if txx >= self.th_x:
             xx += self.vector_x
-        if tyy >= THRESHOULD:
+        if tyy >= self.th_y:
             yy += self.vector_y
         return(xx,yy)
     
@@ -211,14 +213,14 @@ class Sprite():
     def update(self):
         if self.stop_move == False:
             if not(self.vector_x == 0):
-                self.tx += self.dx
+                self.tx = self.tx + DIFF_XY
             if not(self.vector_y == 0):
-                self.ty += self.dy
-            if self.tx >= THRESHOULD:
+                self.ty = self.ty + DIFF_XY
+            if self.tx >= self.th_x:
                 self.previous_x = self.x
                 self.x = self.x + self.vector_x
                 self.tx = 0
-            if self.ty >= THRESHOULD:
+            if self.ty >= self.th_y:
                 self.previous_y = self.y
                 self.y = self.y + self.vector_y
                 self.ty = 0

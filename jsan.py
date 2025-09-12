@@ -48,29 +48,30 @@ def plus_tuple(x,y,t):
 
 # STATES BITs
 
-LEFT  = 0b000000
-RIGHT = 0b000001
-UP    = 0b000000
-DOWN  = 0b000001
+STOP  = 0b000000
+LEFT  = 0b000001
+RIGHT = 0b000010
+UP    = 0b000011
+DOWN  = 0b000100
 
-STOP_L = 0b000000
-STOP_R = 0b000001
-RUN_L  = 0b000100
-RUN_R  = 0b000101
-JUMP_L = 0b001000
-JUMP_R = 0b001001
-FALL_L = 0b010000
-FALL_R = 0b010001
-LAD_UP = 0b100000
-LAD_DN = 0b100001
+STOP_L = 0b000001
+STOP_R = 0b000010
+RUN_L  = 0b000101
+RUN_R  = 0b000110
+JUMP_L = 0b001001
+JUMP_R = 0b001010
+FALL_L = 0b010001
+FALL_R = 0b010010
+LADDER_STOP = 0b100000
+LADDER_UP   = 0b100011
+LADDER_DOWN = 0b100100
 
 STOP_MASK = 0b000000
 RUN_MASK  = 0b000100
 JUMP_MASK = 0b001000
 FALL_MASK = 0b010000
-LR_MASK   = 0b000001
-UD_MASK   = 0b000001
-LAD_MASK  = 0b100000
+LR_MASK   = 0b000011
+LADDER_MASK  = 0b100000
 
 JUMPABLE = [STOP_L,STOP_R,RUN_L,RUN_R]
 
@@ -94,15 +95,15 @@ class Jsan:
         self.states = STOP_L
 
         self.sp.add_frame(STOP_L ,[0],0,(0,0))
-        self.sp.add_frame(RUN_L  ,[1,2,3,2],3,(HRZ_MOVE*(-1),None))
-        self.sp.add_frame(JUMP_L ,[8],0,None)
-        self.sp.add_frame(FALL_L ,[8],0,(None,VRT_MOVE))
+        self.sp.add_frame(RUN_L  ,[1,2,3,2],3,(HRZ_MOVE*(-1),0))
+        self.sp.add_frame(JUMP_L ,[8],0,(0,0))
+        self.sp.add_frame(FALL_L ,[8],0,(0,VRT_MOVE))
         self.sp.add_frame(STOP_R ,[4],0,(0,0))
         self.sp.add_frame(RUN_R  ,[5,6,7,6],3,(HRZ_MOVE,0))
-        self.sp.add_frame(JUMP_R ,[9],0,None)
-        self.sp.add_frame(FALL_R ,[9],0,(None,VRT_MOVE))
-        self.sp.add_frame(LAD_UP ,[10,11],3,(0,VRT_MOVE*(-1)))
-        self.sp.add_frame(LAD_DN ,[10,11],3,(0,VRT_MOVE))
+        self.sp.add_frame(JUMP_R ,[9],0,(0,0))
+        self.sp.add_frame(FALL_R ,[9],0,(0,VRT_MOVE))
+        self.sp.add_frame(LADDER_UP   ,[10,11],3,(0,VRT_MOVE*(-1)))
+        self.sp.add_frame(LADDER_DOWN ,[10,11],3,(0,VRT_MOVE))
 
 ####------------------------------------
 
@@ -125,7 +126,7 @@ class Jsan:
         elif pyxel.btn(pyxel.KEY_S):
             self.move_ladder(DOWN)
         elif pyxel.btnr(pyxel.KEY_W) or pyxel.btnr(pyxel.KEY_S):
-            if is_mask_true(self.states, LAD_MASK):
+            if is_mask_true(self.states, LADDER_MASK):
                 self.stop_vertical_move()
 
         #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
@@ -232,7 +233,7 @@ class Jsan:
 
     def check_ladder_up(self):
         """上移動可能ならTrue, できなければFalse"""
-        if self.states == LAD_UP:
+        if self.states == LADDER_UP:
             if self.check_4corner_space() and self.can_stand():
                 return(False)
         if self.check_ladder_top() or self.check_ladder_btm():
@@ -259,7 +260,7 @@ class Jsan:
             (self.check_ladder_up()) and 
             not(self.check_bonk_head())
             ):
-            self.states = LAD_UP
+            self.states = LADDER_UP
         
         # 下移動が可能なら下る
         elif (
@@ -267,7 +268,7 @@ class Jsan:
             (self.check_ladder_down()) and
             not(self.check_on_the_wall())
             ):
-            self.states = LAD_DN
+            self.states = LADDER_DOWN
 
 ####------------------------------------
 
@@ -317,14 +318,14 @@ class Jsan:
                 return(True)
             else:
                 return(False)
-        elif self.states == LAD_UP:
+        elif self.states == LADDER_UP:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_L)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,TOP_SIDE_R)
             if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
                 return(False)
             else:
                 return(True)
-        elif self.states == LAD_DN:
+        elif self.states == LADDER_DOWN:
             x1,y1 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_L)
             x2,y2 = plus_tuple(self.sp.x,self.sp.y,BTM_SIDE_R)
             if tl.is_wall(x1,y1) or tl.is_wall(x2,y2):
@@ -389,7 +390,7 @@ class Jsan:
 #### 現在のstatesは梯子の昇降中か？
 
     def on_ladder(self):
-        return(is_mask_true(self.states,LAD_MASK))
+        return(is_mask_true(self.states,LADDER_MASK))
 
 #### 落下中か？
 
