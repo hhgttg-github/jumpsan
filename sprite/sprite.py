@@ -273,8 +273,8 @@ class Sprite():
 # SWITCHING SPRITE
 
 class SwitchingSp(Sprite):
-    def __init__(self, x, y, id, hit, interval, sp_group):
-        super().__init__(x, y, id, hit, sp_group)
+    def __init__(self, x, y, thx, thy, id, hit, interval, sp_group):
+        super().__init__(x, y, thx, thy, id, hit, sp_group)
         self.start = pyxel.frame_count
         self.stop  = False
         self.interval = interval
@@ -295,8 +295,8 @@ class SwitchingSp(Sprite):
 
 class AniSprite(Sprite):
 
-    def __init__(self,x,y,id,hit,interval,key,sp_group): #idは最初の画像番号
-        super().__init__(x,y,id,hit,sp_group)
+    def __init__(self,x,y,thx,thy,id,hit,interval,key,sp_group): #idは最初の画像番号
+        super().__init__(x,y,thx,thy,id,hit,sp_group)
         
         self.stop_animation = False
         self.start = pyxel.frame_count
