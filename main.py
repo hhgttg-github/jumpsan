@@ -13,7 +13,7 @@ import tile as tl
 
 class Game:
     def __init__(self):
-        pyxel.init(128,128)
+        pyxel.init(128,128,fps=60)
         pyxel.load("jumpsan.pyxres")
         self.js = Jsan()
         pyxel.run(self.update,self.draw)

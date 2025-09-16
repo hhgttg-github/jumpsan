@@ -43,6 +43,19 @@ BTM_CENTER2 = (4,7)
 UNDER_CENTER1 = (3,8)
 UNDER_CENTER2 = (4,8)
 
+####------------------------------------
+
+M_UP    = ( 0,-1)
+M_DOWN  = ( 0, 1)
+M_LEFT  = (-1, 0)
+M_RIGHT = ( 1, 0)
+M_UR    = ( 1,-1)
+M_DR    = ( 1, 1)
+M_DL    = (-1, 1)
+M_UL    = (-1,-1)
+
+####------------------------------------
+
 def plus_tuple(x,y,t):
     return(x+t[0],y+t[1])
 
@@ -90,7 +103,7 @@ def is_mask_true(b,m):
 class Jsan:
 
     def __init__(self):
-        self.sp = sp.AniSprite(0,0,0,0,2,STOP_L,sp.sp8Group)
+        self.sp = sp.AniSprite(0,0,256,256,2,0,0,2,STOP_L,sp.sp8Group)
 
         self.states = STOP_L
 
@@ -129,22 +142,23 @@ class Jsan:
             if is_mask_true(self.states, LADDER_MASK):
                 self.stop_vertical_move()
 
+        for _ in range(self.sp.count):
         #### ここで必ず上下左右をチェックしてアップデート可能かを調べる。
         #### dx,dy,statesなどの修正をしてから、最終アップデートを！
 
-        self.check_4corner_wall() #revert_xy含む
-        self.check_btm_corner_wall()
+            self.check_4corner_wall() #revert_xy含む
+            self.check_btm_corner_wall()
 
-        if self.is_falling() and self.can_stand():
-             self.stop_fall()
-        elif self.is_freefall():
-            self.start_fall()
+            if self.is_falling() and self.can_stand():
+                self.stop_fall()
+            elif self.is_freefall():
+                self.start_fall()
 
-        ####
-        ####
+            ####
+            ####
 
-        self.sp.set_frame(self.states)
-        self.sp.update()
+            self.sp.set_frame(self.states)
+            self.sp.update()
 
 ####------------------------------------
 
@@ -195,7 +209,7 @@ class Jsan:
 
     def stop_fall(self):
         if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
-            self.states = RUN_MASK | self.get_direction(_)
+            self.states = RUN_MASK | self.get_direction()
         else:
             self.states = STOP_MASK | self.get_direction()
 
